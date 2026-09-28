@@ -11,9 +11,11 @@ export default function RunHistory({ runs, selected, onSelect }) {
       <div className="card-h">RUN HISTORY — {runs.length}</div>
       {runs.length === 0 && <div className="dim mono" style={{ fontSize: 11 }}>No runs — create one</div>}
       {runs.map((r) => (
-        <div
+        <button
+          type="button"
           key={r.run_id}
           className={`run-item ${selected === r.run_id ? 'active' : ''}`}
+          aria-pressed={selected === r.run_id}
           onClick={() => onSelect(r.run_id)}
         >
           <div className="mono" style={{ fontSize: 11, fontWeight: 600 }}>
@@ -35,7 +37,7 @@ export default function RunHistory({ runs, selected, onSelect }) {
               </span>
             )}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   )

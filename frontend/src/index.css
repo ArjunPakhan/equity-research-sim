@@ -38,3 +38,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 input,select{width:100%;background:#0d120d;border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;margin-top:4px}
 input:focus{outline:none;border-color:var(--amber)}
 @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+button.run-item,button.timeline-item{display:block;width:100%;text-align:left;font-family:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;color:inherit}
+button.timeline-item{background:transparent;border-top:none;border-right:none;border-bottom:none}
+button.run-item:focus-visible,button.timeline-item:focus-visible{outline:1px solid var(--amber);outline-offset:2px}

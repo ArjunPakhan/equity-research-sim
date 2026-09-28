@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import MetricCard from './components/MetricCard.jsx'
 import RunHistory from './components/RunHistory.jsx'
 import PipelineRail from './components/PipelineRail.jsx'
+import { requestJSON } from './api.js'
 
 const API = ''
 
@@ -26,44 +27,68 @@ export default function App() {
   const [ticker, setTicker] = useState('RELIANCE')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
+  const [msgKind, setMsgKind] = useState('ok')
+  const [loadError, setLoadError] = useState('')
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
+  const [auditError, setAuditError] = useState('')
 
   const fetchRuns = async () => {
-    const r = await fetch(`${API}/runs`)
-    const d = await r.json()
+    const res = await requestJSON(`${API}/runs`)
+    if (!res.ok) {
+      setLoadError(res.error || 'Unable to load runs')
+      return
+    }
+    setLoadError('')
+    const d = res.data
     setRuns(d)
     if (d.length && !selected) setSelected(d[0].run_id)
   }
   const fetchDetail = async (id) => {
-    const r = await fetch(`${API}/runs/${id}`)
-    if (!r.ok) return
-    setDetail(await r.json())
-    const a = await fetch(`${API}/runs/${id}/audit`)
-    setAudit(a.ok ? await a.json() : [])
+    setDetailLoading(true)
+    const res = await requestJSON(`${API}/runs/${id}`)
+    if (!res.ok) {
+      setDetail(null)
+      setAudit([])
+      setAuditError('')
+      setDetailError(res.error || 'Unable to load run detail')
+      setDetailLoading(false)
+      return
+    }
+    setDetailError('')
+    setDetail(res.data)
+    const a = await requestJSON(`${API}/runs/${id}/audit`)
+    if (!a.ok) {
+      setAudit([])
+      setAuditError(a.error || 'Unable to load audit trail')
+    } else {
+      setAudit(a.data)
+      setAuditError('')
+    }
+    setDetailLoading(false)
   }
   useEffect(()=>{fetchRuns()},[])
   useEffect(()=>{if(selected) fetchDetail(selected)},[selected])
 
   const createRun = async () => {
-    setLoading(true); setMsg('')
-    try{
-      const r = await fetch(`${API}/runs`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker})})
-      const d = await r.json()
-      if(!r.ok) throw new Error(d.detail||JSON.stringify(d))
-      setMsg(`Created ${d.run_id} — awaiting approval`)
-      await fetchRuns(); setSelected(d.run_id)
-    }catch(e){setMsg('Error: '+e.message)}
+    setLoading(true); setMsg(''); setMsgKind('ok')
+    const res = await requestJSON(`${API}/runs`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker})})
+    if(!res.ok){ setMsgKind('err'); setMsg('Error: '+(res.error||'unknown error')); setLoading(false); return }
+    setMsg(`Created ${res.data.run_id} — awaiting approval`)
+    setMsgKind('ok')
+    await fetchRuns(); setSelected(res.data.run_id)
     setLoading(false)
   }
   const approve = async () => {
-    const r = await fetch(`${API}/runs/${selected}/approve`,{method:'POST'})
-    const d = await r.json()
-    if(!r.ok) setMsg('Approve failed: '+(d.detail||'')); else setMsg('Approved — paper execution authorized')
+    const res = await requestJSON(`${API}/runs/${selected}/approve`,{method:'POST'})
+    if(!res.ok){ setMsgKind('err'); setMsg('Approve failed: '+(res.error||'')); }
+    else{ setMsgKind('ok'); setMsg('Approved — paper execution authorized'); }
     fetchRuns(); fetchDetail(selected)
   }
   const reject = async () => {
-    const r = await fetch(`${API}/runs/${selected}/reject`,{method:'POST'})
-    const d = await r.json()
-    if(!r.ok) setMsg('Reject failed: '+(d.detail||'')); else setMsg('Rejected — paper execution blocked')
+    const res = await requestJSON(`${API}/runs/${selected}/reject`,{method:'POST'})
+    if(!res.ok){ setMsgKind('err'); setMsg('Reject failed: '+(res.error||'')); }
+    else{ setMsgKind('ok'); setMsg('Rejected — paper execution blocked'); }
     fetchRuns(); fetchDetail(selected)
   }
 
@@ -90,13 +115,28 @@ export default function App() {
             <label className="dim mono" style={{fontSize:10}}>TICKER</label>
             <input value={ticker} onChange={e=>setTicker(e.target.value.toUpperCase())} placeholder="RELIANCE" />
             <button className="btn" onClick={createRun} disabled={loading}>{loading?'...':'[ CREATE RUN ]'}</button>
-            {msg && <div className="mono" style={{fontSize:11,marginTop:8,color:'#ffb000'}}>{msg}</div>}
+            {msg && (
+              <div className="mono" role="alert" aria-live="polite" style={{fontSize:11,marginTop:8,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,color:msgKind==='err'?'var(--red)':'#ffb000'}}>
+                <span>{msg}</span>
+                <button type="button" onClick={()=>setMsg('')} aria-label="Dismiss message" style={{background:'transparent',border:'none',color:'inherit',cursor:'pointer',fontFamily:'var(--mono)',fontSize:11,padding:'0 4px'}}>✕</button>
+              </div>
+            )}
           </div>
-          <RunHistory runs={runs} selected={selected} onSelect={setSelected} />
+          {loadError && <div className="mono" role="alert" style={{fontSize:11,color:'var(--red)',border:'1px solid var(--red)',padding:'8px',marginBottom:8}}>RUN HISTORY UNAVAILABLE — {loadError}</div>}
+          {(!loadError || runs.length > 0) && <RunHistory runs={runs} selected={selected} onSelect={setSelected} />}
         </div>
 
         <div className="panel">
-          {!detail ? <div className="dim mono">Select a run</div> : <>
+          {detailLoading ? (
+            <div className="dim mono" style={{padding:12}}>LOADING…</div>
+          ) : detailError ? (
+            <div className="card">
+              <div className="card-h">RUN DETAIL</div>
+              <div className="mono" role="alert" style={{fontSize:11,color:'var(--red)',border:'1px solid var(--red)',padding:'8px'}}>RUN DETAIL UNAVAILABLE — {detailError}</div>
+              <button className="btn" onClick={()=>{if(selected) fetchDetail(selected)}}>[ RETRY ]</button>
+              <button className="btn" onClick={()=>{setDetailError(''); setSelected(null)}}>[ DISMISS ]</button>
+            </div>
+          ) : !detail ? <div className="dim mono">Select a run</div> : <>
             <div className="card">
               <div className="card-h">DASHBOARD — {detail.ticker} — {detail.run_id.slice(0,8)}</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -171,13 +211,21 @@ export default function App() {
             </div>
 
             <div className="card">
-              <div className="card-h">AUDIT TRAIL — {audit.length} records</div>
-              {audit.map(a=>(
-                <div key={a.id} className="timeline-item" onClick={()=>setAuditOpen(auditOpen===`a-${a.id}`?null:`a-${a.id}`)}>
+              <div className="card-h">{auditError ? 'AUDIT TRAIL — UNAVAILABLE' : `AUDIT TRAIL — ${audit.length} records`}</div>
+              {auditError ? (
+                <div className="mono" role="alert" style={{fontSize:11,color:'var(--red)'}}>AUDIT UNAVAILABLE — {auditError}</div>
+              ) : audit.map(a=>(
+                <button
+                  type="button"
+                  key={a.id}
+                  className="timeline-item"
+                  aria-expanded={auditOpen===`a-${a.id}`}
+                  onClick={()=>setAuditOpen(auditOpen===`a-${a.id}`?null:`a-${a.id}`)}
+                >
                   <div className="mono" style={{fontSize:10,color:'#ffb000'}}>{a.timestamp?.slice(11,19)} — {a.agent_name}</div>
                   <div className="mono dim" style={{fontSize:10}}>{a.human_approval_status||'n/a'} {a.approved_by?`· ${a.approved_by}`:''}</div>
                   {auditOpen===`a-${a.id}` && <div className="json" style={{marginTop:6}}>{JSON.stringify({input:a.input_json, output:a.output_json}, null, 2)}</div>}
-                </div>
+                </button>
               ))}
             </div>
 
