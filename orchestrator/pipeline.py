@@ -335,7 +335,7 @@ def run_pipeline(
             "entry_price": market_data.get("ohlc", {}).get("data", [{}])[0].get("Close", 0) if market_data.get("ohlc", {}).get("data") else 0,
             "stop_loss_price": None,  # No stop-loss = will fail risk checks
             "loss_pct": 2.0,
-        })
+        }, run_id=run_id)
 
         if not _validate_agent_output(risk_out, "risk"):
             raise RuntimeError("Risk Agent output failed validation")

@@ -232,7 +232,7 @@ class TestRiskAgent:
 
     def test_mock_no_backtest_data(self):
         """Test risk agent with no backtest data — marks checks as unavailable."""
-        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"})
+        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"}, run_id="test-run")
 
         assert "run_id" in result
         assert result["checks_passed"] is False
@@ -246,26 +246,28 @@ class TestRiskAgent:
         result = run_risk_agent(
             {"ticker": "RELIANCE", "resolved_ticker": "RELIANCE.NS"},
             {"capital": 100000},
-            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0}
+            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0},
+            run_id="test-run",
         )
 
         assert validate_risk_output(result) is True
 
     def test_validation_checks_passed_is_boolean(self):
         """Test that checks_passed is always a boolean."""
-        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"})
+        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"}, run_id="test-run")
         assert isinstance(result["checks_passed"], bool)
 
         result2 = run_risk_agent(
             {"ticker": "RELIANCE", "resolved_ticker": "RELIANCE.NS"},
             {"capital": 100000},
-            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0}
+            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0},
+            run_id="test-run",
         )
         assert isinstance(result2["checks_passed"], bool)
 
     def test_simulation_disclaimer_present(self):
         """Test that simulation disclaimer is in risk output."""
-        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"})
+        result = run_risk_agent(None, {}, {"ticker": "RELIANCE"}, run_id="test-run")
         assert "simulation_disclaimer" in result
         assert "educational simulation" in result["simulation_disclaimer"].lower() or "simulation controls" in result["simulation_disclaimer"].lower()
 
@@ -274,7 +276,8 @@ class TestRiskAgent:
         result = run_risk_agent(
             {"ticker": "RELIANCE", "resolved_ticker": "RELIANCE.NS"},
             {"capital": 100000},
-            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0}
+            {"position_size_pct": 10.0, "entry_price": 2500, "stop_loss_price": 2400, "loss_pct": 2.0},
+            run_id="test-run",
         )
 
         # With stop-loss specified, checks should potentially pass
@@ -620,6 +623,28 @@ class TestIntegration:
         if os.path.exists("test_run_id.db"):
             os.remove("test_run_id.db")
 
+    def test_risk_and_paper_payload_run_id_matches_audit_run_id(self, tmp_path):
+        """Regression: Risk and Paper Execution must carry the pipeline's run_id, not their own."""
+        db = str(tmp_path / "canonical.db")
+        result = run_pipeline(ticker="RELIANCE", db_path=db, skip_approval=True)
+        run_id = result["run_id"]
+        assert "paper_execution" in result["stages_completed"]
+        assert result["paper_execution"]["run_id"] == run_id
+
+        conn = sqlite3.connect(db)
+        rows = conn.execute("SELECT run_id, agent_name, output_json FROM audit_log").fetchall()
+        conn.close()
+        assert {r[0] for r in rows} == {run_id}
+        outputs = {agent: json.loads(out) for _, agent, out in rows if out}
+        assert outputs["risk"]["run_id"] == run_id
+        assert outputs["paper_execution"]["run_id"] == run_id
+
+    def test_approval_gate_displays_pipeline_run_id(self, tmp_path, capsys):
+        """Regression: the Human Approval Gate shows the pipeline's run_id."""
+        result = run_pipeline(ticker="RELIANCE", db_path=str(tmp_path / "gate.db"))
+        assert result["approval_status"] == "rejected"
+        assert f"Run ID: {result['run_id']}" in capsys.readouterr().out
+
 
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
@@ -637,7 +662,7 @@ class TestEdgeCases:
 
     def test_risk_with_none_inputs(self):
         """Test risk agent with None inputs handles gracefully."""
-        result = run_risk_agent(None, None, None)
+        result = run_risk_agent(None, None, None, run_id="test-run")
         # Should not crash, should produce valid output structure
         assert "run_id" in result
         assert isinstance(result["checks_passed"], bool)

@@ -138,6 +138,8 @@ def run_risk_agent(
     backtest_output: Dict[str, Any],
     account_settings: Dict[str, Any] = None,
     proposed_trade: Dict[str, Any] = None,
+    *,
+    run_id: str,
 ) -> Dict[str, Any]:
     """
     Run the Risk Agent.
@@ -146,6 +148,7 @@ def run_risk_agent(
         backtest_output: Backtest Agent's structured output
         account_settings: Simulated account configuration (capital, limits, etc.)
         proposed_trade: Proposed trade information (ticker, size, entry, stop-loss)
+        run_id: The caller's canonical pipeline run ID
 
     Returns:
         Structured risk output dictionary
@@ -153,10 +156,6 @@ def run_risk_agent(
     Raises:
         RiskAgentError: If agent execution fails
     """
-    # Generate unique run ID
-    import uuid
-    run_id = str(uuid.uuid4())
-
     ticker = "UNKNOWN"
     resolved_ticker = "UNKNOWN"
 

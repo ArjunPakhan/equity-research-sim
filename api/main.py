@@ -409,7 +409,7 @@ def _run_until_risk(ticker: str, db_path: str, run_id: str, req: CreateRunReques
         "entry_price": market_data.get("ohlc", {}).get("data", [{}])[0].get("Close", 0) if market_data.get("ohlc", {}).get("data") else 0,
         "stop_loss_price": None,
         "loss_pct": 2.0,
-    }))
+    }, run_id=run_id))
     log("risk", backtest_out, risk_out)
 
     cur.execute("INSERT INTO audit_log (run_id, agent_name, timestamp, input_json, output_json, human_approval_status, approved_by, approved_at) VALUES (?,?,?,?,?,?,?,?)",

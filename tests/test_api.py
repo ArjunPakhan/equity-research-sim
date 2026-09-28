@@ -90,6 +90,14 @@ def test_risk_endpoint(client):
     assert "risk_warnings" in r.json()
 
 
+def test_risk_and_paper_run_id_match_api_run_id(client):
+    rid = client.post("/runs", json={"ticker": "RELIANCE"}).json()["run_id"]
+    assert client.get(f"/runs/{rid}/risk").json()["run_id"] == rid
+    r = client.post(f"/runs/{rid}/approve")
+    assert r.status_code == 200
+    assert r.json()["paper_execution"]["run_id"] == rid
+
+
 def test_review_not_yet(client):
     rid = client.post("/runs", json={"ticker": "RELIANCE"}).json()["run_id"]
     r = client.get(f"/runs/{rid}/review")
