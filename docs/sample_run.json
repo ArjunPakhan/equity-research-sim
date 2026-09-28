@@ -1,0 +1,91 @@
+{
+  "ticker": "RELIANCE.NS",
+  "run_id": "EXAMPLE-be31cdee",
+  "note": "sanitized example \u2014 actual run_id redacted, values from real engine",
+  "backtest": {
+    "strategy_type": "moving_average_crossover",
+    "fast_period": 20,
+    "slow_period": 50,
+    "initial_capital": 100000.0,
+    "final_equity": 99635.22,
+    "total_return_pct": -0.36,
+    "trade_count": 2,
+    "win_rate": 0.0,
+    "avg_win": 0.0,
+    "avg_loss": 2.9650000000000003,
+    "profit_factor": 0.0,
+    "max_drawdown": 0.3647839344798558,
+    "commission_assumption": 0.1,
+    "slippage_assumption": 0.05,
+    "number_of_bars": 250,
+    "is_mock": false,
+    "data_status": "success \u2014 deterministic backtest completed"
+  },
+  "risk": {
+    "checks_passed": false,
+    "position_size": 10.0,
+    "exposure_limit": 25.0,
+    "risk_warnings": [
+      "Stop-loss not specified \u2014 required for all simulated trades",
+      "",
+      "Critical: Stop-loss not specified \u2014 trade cannot pass risk checks"
+    ],
+    "sebi_aligned_controls": [
+      "unique_decision_identifier",
+      "daily loss limit check",
+      "drawdown ceiling check",
+      "order-rate check (single pipeline run)"
+    ]
+  },
+  "approval": "pending",
+  "paper_execution": {
+    "trade_id": "f46611bc-d380-40bc-a233-93da0c5444ca",
+    "run_id": "7ca99a90-6398-4519-97bb-3fce95f77f80",
+    "ticker": "RELIANCE",
+    "resolved_ticker": "RELIANCE",
+    "execution_status": "initiated",
+    "execution_type": "PAPER_ONLY",
+    "entry_price": 0.0,
+    "execution_price": 0.0,
+    "simulated_quantity": 0,
+    "position_size_pct": 10.0,
+    "stop_loss": null,
+    "account_capital": 100000,
+    "notional": 0.0,
+    "entry_price_source": "unavailable \u2014 Phase 2 mock",
+    "execution_timestamp": "2026-08-24T18:42:20.993342+00:00",
+    "simulation_disclaimer": "This is a paper-trading simulation only. No real orders were placed. No real money was involved. Results are for educational purposes."
+  },
+  "review": {
+    "ticker": "RELIANCE",
+    "trade_id": "f46611bc-d380-40bc-a233-93da0c5444ca",
+    "execution_status": "initiated",
+    "review_timestamp": "2026-08-24T18:42:20.996343+00:00",
+    "evidence_assessment": "Insufficient evidence to justify the trade. Risk checks did not all pass. Key concerns: Stop-loss not specified \u2014 required for all simulated trades; ; Critical: Stop-loss not specified \u2014 trade cannot pass risk checks",
+    "risk_concerns": [
+      "Stop-loss not specified \u2014 required for all simulated trades",
+      "",
+      "Critical: Stop-loss not specified \u2014 trade cannot pass risk checks"
+    ],
+    "curve_fitting_concerns": "Trade was based on identifiable technical levels \u2014 reviewers should assess whether these levels were objectively derived or curve-fitted to historical data",
+    "should_have_traded": "no",
+    "improvements": [
+      "Ensure all risk checks pass before trade execution",
+      "Add stop-loss requirement to prevent unlimited loss exposure"
+    ],
+    "data_limitations": [
+      "Risk controls are simulation-only, not regulatory compliance"
+    ]
+  },
+  "audit_stages": [
+    "pipeline_initialization",
+    "research",
+    "debate",
+    "backtest",
+    "risk",
+    "human_approval",
+    "human_approval",
+    "paper_execution",
+    "review"
+  ]
+}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect width="900" height="520" fill="#0a0f0a"/>
+<text x="450" y="28" text-anchor="middle" font-family="monospace" font-size="13" letter-spacing="3" fill="#ffb000">AI-ORCHESTRATED EQUITY RESEARCH — PAPER TRADING ONLY</text>
+<text x="450" y="44" text-anchor="middle" font-family="monospace" font-size="9" letter-spacing="1" fill="#5a6a5a">AI proposes · Code calculates · Human approves · Audit proves</text>
+<!-- legend -->
+<g font-family="monospace" font-size="9">
+<rect x="620" y="55" width="12" height="12" fill="#1a2218" stroke="#ffb000"/><text x="638" y="65" fill="#ffb000">AI reasoning</text>
+<rect x="730" y="55" width="12" height="12" fill="#0f1a0f" stroke="#00c853"/><text x="748" y="65" fill="#00c853">deterministic</text>
+</g>
+<!-- boxes -->
+<g font-family="monospace">
+<!-- market data -->
+<rect x="300" y="80" width="300" height="38" rx="4" fill="#1a2218" stroke="#2a3328"/><text x="450" y="98" text-anchor="middle" font-size="11" fill="#e8e8d8">REAL MARKET DATA</text><text x="450" y="110" text-anchor="middle" font-size="8" fill="#6b7a6b">yfinance · NSE .NS · parquet cache · 251 bars</text>
+<!-- arrows -->
+<g fill="#2a3328" font-size="14"><text x="450" y="132" text-anchor="middle">↓</text></g>
+<rect x="300" y="140" width="300" height="34" rx="4" fill="#1a2218" stroke="#ffb000"/><text x="450" y="162" text-anchor="middle" font-size="11" fill="#ffb000">RESEARCH AGENT</text>
+<g fill="#2a3328" font-size="14"><text x="450" y="188" text-anchor="middle">↓</text></g>
+<rect x="300" y="196" width="300" height="34" rx="4" fill="#1a2218" stroke="#ffb000"/><text x="450" y="218" text-anchor="middle" font-size="11" fill="#ffb000">DEBATE AGENT</text>
+<g fill="#2a3328" font-size="14"><text x="450" y="244" text-anchor="middle">↓</text></g>
+<rect x="250" y="252" width="400" height="48" rx="4" fill="#0f1a0f" stroke="#00c853"/><text x="450" y="273" text-anchor="middle" font-size="11" fill="#00c853">DETERMINISTIC BACKTEST ENGINE</text><text x="450" y="287" text-anchor="middle" font-size="8" fill="#6b7a6b">MA Crossover 20/50 · next-bar open · 0.1% / 0.05% · PAPER ONLY</text>
+<g fill="#2a3328" font-size="14"><text x="450" y="314" text-anchor="middle">↓</text></g>
+<rect x="300" y="322" width="300" height="34" rx="4" fill="#1a2218" stroke="#ffb000"/><text x="450" y="344" text-anchor="middle" font-size="11" fill="#ffb000">RISK AGENT</text><text x="610" y="344" font-size="8" fill="#6b7a6b">SEBI-informed sim</text>
+<g fill="#ffb000" font-size="14"><text x="450" y="370" text-anchor="middle">↓</text></g>
+<rect x="260" y="378" width="380" height="42" rx="4" fill="#1a1200" stroke="#ffb000"/><text x="450" y="398" text-anchor="middle" font-size="11" fill="#ffb000">HUMAN APPROVAL GATE</text><text x="450" y="412" text-anchor="middle" font-size="8" fill="#8a6a00">APPROVE → paper exec · REJECT → stop · no AI approval</text>
+<g fill="#2a3328" font-size="14"><text x="450" y="432" text-anchor="middle">↓</text></g>
+<rect x="300" y="440" width="300" height="30" rx="4" fill="#0f1a0f" stroke="#00c853"/><text x="450" y="459" text-anchor="middle" font-size="11" fill="#00c853">PAPER EXECUTION</text><text x="610" y="459" font-size="8" fill="#00c853">PAPER_ONLY</text>
+<g fill="#2a3328" font-size="14"><text x="450" y="482" text-anchor="middle">↓</text></g>
+<rect x="300" y="490" width="300" height="22" rx="4" fill="#1a2218" stroke="#ffb000"/><text x="450" y="505" text-anchor="middle" font-size="10" fill="#ffb000">REVIEW AGENT</text>
+</g>
+<!-- side audit -->
+<g font-family="monospace">
+<rect x="680" y="140" width="180" height="320" rx="6" fill="#131a13" stroke="#2a3328" stroke-dasharray="6 4"/>
+<text x="770" y="162" text-anchor="middle" font-size="9" letter-spacing="1" fill="#ffb000">SQLITE AUDIT TRAIL</text>
+<text x="770" y="178" text-anchor="middle" font-size="7" fill="#5a6a5a">run_id · agent · input/output</text>
+<g font-size="8" fill="#6b7a6b">
+<text x="695" y="198">→ every stage logged</text>
+<text x="695" y="212">→ single run_id</text>
+<text x="695" y="226">→ approval metadata</text>
+<text x="695" y="244" fill="#ffb000">FastAPI  →  React/Vite</text>
+<text x="695" y="258">/health /runs /audit</text>
+<text x="695" y="272">no broker · no secrets</text>
+</g>
+</g>
+</svg>

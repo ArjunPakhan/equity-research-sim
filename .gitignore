@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data cache (parquet) — regenerated via yfinance
+data/cache/*.parquet
+data/cache/*.csv
+
+# SQLite runtime DB (keep schema, not live runs)
+audit.db
+*.db
+*.sqlite
+*.sqlite3
+!db/schema.sql
+
+# Env / secrets
+.env
+.env.*
+*.key
+*.token
+secrets.toml
+credentials.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Build artifacts
+*.md.bak

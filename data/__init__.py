@@ -1,0 +1,1 @@
+"""Data layer package for equity research platform."""
