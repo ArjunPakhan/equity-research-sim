@@ -642,8 +642,9 @@ class TestEdgeCases:
         assert "run_id" in result
         assert isinstance(result["checks_passed"], bool)
 
-    def test_pipeline_with_defaults(self):
+    def test_pipeline_with_defaults(self, tmp_path, monkeypatch):
         """Test pipeline runs with all default parameters."""
+        monkeypatch.chdir(tmp_path)  # default relative db_path "audit.db" resolves here
         result = run_pipeline(ticker="RELIANCE")
         assert "run_id" in result
         assert "approval_status" in result
