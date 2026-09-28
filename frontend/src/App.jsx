@@ -72,6 +72,7 @@ export default function App() {
   const pe = detail?.paper_execution_summary
   const approval = detail?.approval_status
   const pipeStatus = detail?.pipeline_status
+  const isFailed = pipeStatus === 'failed'
 
   return (
     <div>
@@ -116,7 +117,7 @@ export default function App() {
               </div>
             </div>
 
-            <PipelineRail audit={audit} approval={approval} />
+            <PipelineRail audit={audit} approval={approval} status={pipeStatus} />
 
             <div className="card">
               <div className="card-h">BACKTEST — DETERMINISTIC ENGINE</div>
@@ -154,15 +155,16 @@ export default function App() {
             <div className="card">
               <div className="card-h">APPROVAL</div>
               <div style={{textAlign:'center',padding:'8px 0'}}>
-                <div className={`badge-status ${approval==='approved'?'ok':approval==='rejected'?'bad':'warn'}`} style={{display:'inline-block',padding:'6px 12px',fontSize:12}}>
-                  {approval==='pending'?'WAITING FOR APPROVAL': approval==='approved'?'APPROVED': approval==='rejected'?'REJECTED': approval}
+                <div className={`badge-status ${isFailed?'bad':approval==='approved'?'ok':approval==='rejected'?'bad':'warn'}`} style={{display:'inline-block',padding:'6px 12px',fontSize:12}}>
+                  {isFailed?'PIPELINE FAILED':approval==='pending'?'WAITING FOR APPROVAL': approval==='approved'?'APPROVED': approval==='rejected'?'REJECTED': approval}
                 </div>
                 <div className="mono dim" style={{fontSize:10,marginTop:6}}>{pipeStatus}</div>
               </div>
-              {approval==='pending' && <>
+              {approval==='pending' && !isFailed && <>
                 <button className="btn" onClick={approve}>[ APPROVE PAPER TRADE ]</button>
                 <button className="btn reject" onClick={reject}>[ REJECT ]</button>
               </>}
+              {isFailed && <div className="mono" style={{textAlign:'center',padding:8,border:'1px solid #ff3d00',color:'#ff3d00',marginTop:8}}>PAPER EXECUTION BLOCKED — NO VALID RISK RESULT</div>}
               {approval==='rejected' && <div className="mono" style={{textAlign:'center',padding:8,border:'1px solid #ff3d00',color:'#ff3d00',marginTop:8}}>PAPER EXECUTION BLOCKED</div>}
               {approval==='approved' && <div className="mono" style={{textAlign:'center',padding:8,border:'1px solid #00c853',color:'#00c853',marginTop:8}}>PAPER EXECUTION AUTHORIZED — {pe?.trade_id?.slice(0,8)||''}</div>}
               <div className="dim mono" style={{fontSize:10,marginTop:8}}>No broker — simulated only — explicit human action required</div>

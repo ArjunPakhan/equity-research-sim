@@ -20,7 +20,8 @@ export default function RunHistory({ runs, selected, onSelect }) {
             {r.ticker} <span className="dim" style={{ fontSize: 10 }}>{r.run_id.slice(0, 8)}</span>
           </div>
           <div className="mono dim" style={{ fontSize: 10 }}>
-            {r.created_at?.slice(0, 16).replace('T', ' ')} — {r.pipeline_status}
+            {r.created_at?.slice(0, 16).replace('T', ' ')} —{' '}
+            <span style={r.pipeline_status === 'failed' ? { color: 'var(--red)' } : undefined}>{r.pipeline_status}</span>
           </div>
           <div style={{ marginTop: 4, display: 'flex', gap: 4 }}>
             <span

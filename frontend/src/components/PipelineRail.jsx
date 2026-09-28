@@ -3,6 +3,7 @@ import ResearchAgentCard from './ResearchAgentCard.jsx'
 import DebateAgentCard from './DebateAgentCard.jsx'
 import BacktestAgentCard from './BacktestAgentCard.jsx'
 import RiskAgentCard from './RiskAgentCard.jsx'
+import { deriveStageStates } from './pipelineState.js'
 
 const DEFAULT_STAGES = [
   { k: 'research', label: 'Research' },
@@ -52,7 +53,7 @@ function compactSummary(rec) {
   return null
 }
 
-export default function PipelineRail({ audit, approval, stages = DEFAULT_STAGES }) {
+export default function PipelineRail({ audit, approval, stages = DEFAULT_STAGES, status = null }) {
   const [selected, setSelected] = useState(null)
   const [showRaw, setShowRaw] = useState(false)
   const [flash, setFlash] = useState({})
@@ -62,43 +63,23 @@ export default function PipelineRail({ audit, approval, stages = DEFAULT_STAGES 
   const riskRec = getRec(audit, 'risk')
   const riskFailed = riskRec && riskRec.output_json && riskRec.output_json.checks_passed === false
   const riskHasWarnings = riskRec && riskRec.output_json && Array.isArray(riskRec.output_json.risk_warnings) && riskRec.output_json.risk_warnings.length > 0
-
-  function stageState(s) {
-    const rec = getRec(audit, s.k)
-    const done = !!rec
-    if (s.k === 'human_approval') {
-      if (approval === 'pending') return { status: 'AWAITING', tone: 'amber', done: true, rec, awaiting: true }
-      if (approval === 'approved') {
-        // warning if risk failed but approved
-        if (riskFailed || riskHasWarnings) return { status: 'APPROVED*', tone: 'amber', done: true, rec, warning: true }
-        return { status: 'APPROVED', tone: 'green', done: true, rec }
-      }
-      if (approval === 'rejected') return { status: 'REJECTED', tone: 'red', done: true, rec }
-      return { status: 'PENDING', tone: 'muted', done, rec }
-    }
-    // Paper execution / review must not read as active before human authorization
-    if ((s.k === 'paper_execution' || s.k === 'review') && !done && approval !== 'approved') {
-      return { status: approval === 'rejected' ? 'BLOCKED' : 'PENDING', tone: 'muted', done: false, rec: null }
-    }
-    if (!done) return { status: 'PENDING', tone: 'muted', done: false, rec: null }
-    // warning for risk
-    if (s.k === 'risk' && (riskFailed || riskHasWarnings)) return { status: 'COMPLETED*', tone: 'amber', done: true, rec, warning: true }
-    return { status: 'COMPLETED', tone: 'green', done: true, rec }
-  }
+  const pipelineFailed = status === 'failed'
+  const stageStates = deriveStageStates(stages, { audit, approval, riskFailed, riskHasWarnings, pipelineFailed })
 
   // One-shot completion / approval flashes — only when a stage signature actually changes after first observation
   useEffect(() => {
     const sigs = {}
     const newly = []
-    for (const s of stages) {
-      const st = stageState(s)
+    const states = deriveStageStates(stages, { audit, approval, riskFailed, riskHasWarnings, pipelineFailed })
+    stages.forEach((s, i) => {
+      const st = states[i]
       const sig = `${st.status}|${st.tone}|${st.done ? 1 : 0}|${st.warning ? 1 : 0}`
       sigs[s.k] = sig
       const prev = prevSigRef.current
       if (prev && prev[s.k] !== undefined && prev[s.k] !== sig && st.done) {
         newly.push(s.k)
       }
-    }
+    })
     prevSigRef.current = sigs
     if (newly.length === 0) return
     setFlash((f) => {
@@ -108,7 +89,7 @@ export default function PipelineRail({ audit, approval, stages = DEFAULT_STAGES 
     })
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
     flashTimerRef.current = setTimeout(() => setFlash({}), 280)
-  }, [audit, approval, stages])
+  }, [audit, approval, stages, pipelineFailed])
 
   useEffect(() => () => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
@@ -186,14 +167,14 @@ export default function PipelineRail({ audit, approval, stages = DEFAULT_STAGES 
 
       <div className="pr-rail" role="list">
         {stages.map((s, i) => {
-          const st = stageState(s)
+          const st = stageStates[i]
           const isSelected = selected === s.k
           const canClick = !!st.rec
           const toneClass = st.tone
           const connectorTone = st.done ? (st.tone === 'red' ? 'red' : st.tone === 'amber' ? 'amber' : 'green') : 'muted'
           const nodeFlash = flash[s.k] != null
           const connectorFlash = nodeFlash && i < stages.length - 1
-          const gated = (s.k === 'paper_execution' || s.k === 'review') && !approvalGateOpen && !st.done
+          const gated = (s.k === 'paper_execution' || s.k === 'review') && !approvalGateOpen && !st.done && !pipelineFailed
           return (
             <div key={s.k} className="pr-node-wrap" role="listitem">
               <button

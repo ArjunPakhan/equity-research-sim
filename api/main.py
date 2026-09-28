@@ -117,6 +117,8 @@ def _approval_state(records: List[Dict]) -> str:
 
 
 def _pipeline_status(records: List[Dict]) -> str:
+    if any(r["agent_name"] == "pipeline_error" for r in records):
+        return "failed"
     approval = _approval_state(records)
     has_review = any(r["agent_name"] == "review" for r in records)
     has_exec = any(r["agent_name"] == "paper_execution" for r in records)
@@ -419,6 +421,16 @@ def _run_until_risk(ticker: str, db_path: str, run_id: str, req: CreateRunReques
     return backtest_out, risk_out
 
 
+def _record_pipeline_failure(db_path: str, run_id: str, error: Exception) -> None:
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("INSERT INTO audit_log (run_id, agent_name, timestamp, input_json, output_json, human_approval_status, approved_by, approved_at) VALUES (?,?,?,?,?,?,?,?)",
+                (run_id, "pipeline_error", datetime.now(timezone.utc).isoformat(), None,
+                 json.dumps({"error": f"{type(error).__name__}: {error}"}), None, None, None))
+    conn.commit()
+    conn.close()
+
+
 @app.post("/runs")
 def create_run(req: CreateRunRequest):
     if req.fast_period and req.slow_period and req.fast_period >= req.slow_period:
@@ -438,6 +450,7 @@ def create_run(req: CreateRunRequest):
         _run_until_risk(req.ticker, db_path, run_id, req)
     except Exception as e:
         logger.exception("pipeline failed")
+        _record_pipeline_failure(db_path, run_id, e)
         raise HTTPException(status_code=500, detail=f"pipeline error: {e}")
     return {"run_id": run_id, "ticker": req.ticker, "status": "awaiting_approval", "approval_status": "pending"}
 
@@ -451,6 +464,8 @@ def approve_run(run_id: str):
     records = _fetch_records(db_path, run_id)
     if not records:
         raise HTTPException(status_code=404, detail="run not found")
+    if _pipeline_status(records) == "failed":
+        raise HTTPException(status_code=400, detail="pipeline failed cannot approve")
     state = _approval_state(records)
     if state == "approved":
         raise HTTPException(status_code=409, detail="run already approved")
