@@ -283,7 +283,8 @@ def run_risk_agent(
             "drawdown ceiling check marked UNAVAILABLE"
         )}
 
-    result["risk_warnings"].extend([dd_check.get("warning", "")])
+    if dd_check.get("warning"):
+        result["risk_warnings"].append(dd_check["warning"])
     if dd_check.get("within_ceiling") and dd_check.get("warning", "") == "":
         result["sebi_aligned_controls"].append("drawdown ceiling check")
 

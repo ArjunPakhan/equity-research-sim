@@ -285,6 +285,37 @@ class TestRiskAgent:
         assert "run_id" in result
         assert isinstance(result["checks_passed"], bool)
 
+    def test_passing_drawdown_creates_no_empty_warning(self):
+        """Regression: a passing drawdown ceiling check must not insert '' into risk_warnings."""
+        result = run_risk_agent(
+            {"ticker": "TCS", "resolved_ticker": "TCS", "max_drawdown": 0.2667},
+            {"capital": 100000},
+            {"position_size_pct": 10.0, "entry_price": 2082, "stop_loss_price": 2000, "loss_pct": 2.0},
+            run_id="test-dd-pass",
+        )
+
+        assert "" not in result["risk_warnings"]
+        assert all(isinstance(w, str) and w.strip() for w in result["risk_warnings"])
+        assert "drawdown ceiling check" in result["sebi_aligned_controls"]
+
+    def test_valid_warning_strings_preserved_exactly(self):
+        """Stop-loss and unavailable-drawdown warnings keep their exact text."""
+        result = run_risk_agent(
+            {"ticker": "TCS", "resolved_ticker": "TCS"},
+            {"capital": 100000},
+            {"position_size_pct": 10.0, "entry_price": 2082, "loss_pct": 2.0},
+            run_id="test-warn-text",
+        )
+
+        assert "Stop-loss not specified — required for all simulated trades" in result["risk_warnings"]
+        assert "Critical: Stop-loss not specified — trade cannot pass risk checks" in result["risk_warnings"]
+        assert (
+            "Max drawdown from backtest is unavailable (Phase 3 engine required) — "
+            "drawdown ceiling check marked UNAVAILABLE"
+        ) in result["risk_warnings"]
+        assert "" not in result["risk_warnings"]
+        assert result["checks_passed"] is False
+
 
 class TestReviewAgent:
     """Tests for the Review Agent."""
