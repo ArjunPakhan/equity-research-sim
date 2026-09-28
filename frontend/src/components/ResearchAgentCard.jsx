@@ -23,12 +23,23 @@ export default function ResearchAgentCard({ rec, bt }) {
   const levels = Array.isArray(o.key_levels) ? o.key_levels : (o.key_levels !== undefined ? [o.key_levels] : [])
   const quality = o.data_quality && typeof o.data_quality === 'object' ? o.data_quality : null
   const timestamp = rec.timestamp || o.generated_at
+  const llmMode = o.llm_mode === 'real' || o.llm_mode === 'mock' ? o.llm_mode : null
+  const llmModel = llmMode === 'mock'
+    ? '—'
+    : (llmMode === 'real' && typeof o.model === 'string' && o.model ? o.model : null)
 
   return (
     <div className="card" style={{ marginTop: 8 }}>
       <div className="card-h">RESEARCH AGENT</div>
       {row('STATUS', rec.human_approval_status === 'approved' ? 'COMPLETED (APPROVED)' : 'COMPLETED')}
       {row('TIMESTAMP', timestamp ? String(timestamp).slice(0, 19).replace('T', ' ') : null)}
+      <div className="metric">
+        <span>LLM MODE</span>
+        <span style={{ color: llmMode === 'real' ? 'var(--green)' : llmMode === 'mock' ? 'var(--amber)' : undefined }}>
+          {llmMode ? llmMode.toUpperCase() : 'UNAVAILABLE'}
+        </span>
+      </div>
+      {row('LLM MODEL', llmModel)}
       {row('TICKER', o.resolved_ticker || o.ticker)}
       {row('TREND', o.trend)}
       <DataProvenance rec={rec} bt={bt} />

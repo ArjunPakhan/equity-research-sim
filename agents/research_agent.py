@@ -337,6 +337,8 @@ def run_research_agent(
             warnings.append("No news data available")
         mock_response["data_warnings"] = warnings
         mock_response["data_quality"] = "partial" if warnings else "complete"
+        mock_response["llm_mode"] = "mock"
+        mock_response["model"] = None
 
         return mock_response
 
@@ -344,7 +346,10 @@ def run_research_agent(
     try:
         logger.info("Attempting real LLM call")
         response = _call_llm(llm_input, RESEARCH_SYSTEM_PROMPT)
-        return _parse_llm_response(response, market_data)
+        result = _parse_llm_response(response, market_data)
+        result["llm_mode"] = "real"
+        result["model"] = nvidia_model()
+        return result
     except ResearchAgentError as e:
         logger.warning(f"LLM call failed, falling back to mock: {e}")
         # Fall back to mock mode

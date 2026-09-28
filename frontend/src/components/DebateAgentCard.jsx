@@ -12,6 +12,10 @@ export default function DebateAgentCard({ rec }) {
   const o = rec.output_json || {}
   const biases = Array.isArray(o.biases_flagged) ? o.biases_flagged : []
   const timestamp = rec.timestamp || o.generated_at
+  const llmMode = o.llm_mode === 'real' || o.llm_mode === 'mock' ? o.llm_mode : null
+  const llmModel = llmMode === 'mock'
+    ? '—'
+    : (llmMode === 'real' && typeof o.model === 'string' && o.model ? o.model : null)
 
   return (
     <div className="card" style={{ marginTop: 8 }}>
@@ -23,6 +27,16 @@ export default function DebateAgentCard({ rec }) {
       <div className="metric">
         <span>TIMESTAMP</span>
         <span>{timestamp ? String(timestamp).slice(0, 19).replace('T', ' ') : 'UNAVAILABLE'}</span>
+      </div>
+      <div className="metric">
+        <span>LLM MODE</span>
+        <span style={{ color: llmMode === 'real' ? 'var(--green)' : llmMode === 'mock' ? 'var(--amber)' : undefined }}>
+          {llmMode ? llmMode.toUpperCase() : 'UNAVAILABLE'}
+        </span>
+      </div>
+      <div className="metric">
+        <span>LLM MODEL</span>
+        <span style={{ textAlign: 'right', maxWidth: '65%' }}>{val(llmModel)}</span>
       </div>
 
       <div style={{ marginTop: 8, border: '1px solid var(--green)', padding: 8, background: 'rgba(0,200,83,0.05)' }}>

@@ -347,6 +347,8 @@ def run_debate_agent(
         mock_response["resolved_ticker"] = research_output.get("resolved_ticker", ticker)
         mock_response["generated_at"] = datetime.now(timezone.utc).isoformat()
         mock_response["data_sources_used"] = research_output.get("data_sources_used", [])
+        mock_response["llm_mode"] = "mock"
+        mock_response["model"] = None
 
         return mock_response
 
@@ -354,7 +356,10 @@ def run_debate_agent(
     try:
         logger.info("Attempting real LLM call for Debate Agent")
         response = _call_llm_debate(_prepare_debate_input(research_output), DEBATE_SYSTEM_PROMPT)
-        return _parse_debate_response(response, research_output)
+        result = _parse_debate_response(response, research_output)
+        result["llm_mode"] = "real"
+        result["model"] = nvidia_model()
+        return result
     except DebateAgentError as e:
         logger.warning(f"LLM call failed, falling back to mock: {e}")
         # Fall back to mock mode
