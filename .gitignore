@@ -28,6 +28,9 @@ audit.db
 *.token
 secrets.toml
 credentials.json
+*.pem
+*.p12
+secrets*.json
 
 # Frontend
 frontend/node_modules/

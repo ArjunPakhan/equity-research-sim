@@ -167,7 +167,7 @@ Research → Debate reasoning runs on **NVIDIA NIM** (OpenAI-compatible endpoint
 
 ```powershell
 # process environment only — set before starting the backend
-$env:NVIDIA_API_KEY = "nvapi-..."        # your key from build.nvidia.com
+$env:NVIDIA_API_KEY = "your-nvidia-api-key-here"        # your key from build.nvidia.com
 $env:NVIDIA_MODEL   = "nvidia/nemotron-3.5-lightning-30b-a3b"   # optional (default)
 $env:NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"    # optional (default)
 ```
