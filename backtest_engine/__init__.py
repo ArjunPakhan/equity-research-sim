@@ -326,6 +326,10 @@ class BacktestEngine:
         exit_time = None
         entry_shares = 0.0
 
+        # Previous bar's unrealized P&L (for delta-based mark-to-market;
+        # ensures the same unrealized level is never counted twice)
+        prev_unrealized = 0.0
+
         # Trade records
         closed_trades: List[Dict[str, Any]] = []
 
@@ -346,9 +350,13 @@ class BacktestEngine:
             # Mark-to-market: equity changes only when we have a position
             if in_position and i > 0:
                 # Mark-to-market P&L from entry to current bar's close
-                # After fees and slippage are already accounted for at entry/exit
+                # Add only the CHANGE since the previous bar, so the same
+                # unrealized P&L level is never accumulated repeatedly.
                 unrealized_pnl = entry_shares * (data["Close"].iloc[i] - entry_price)
-                capital += unrealized_pnl  # Update capital mark-to-market
+                capital += unrealized_pnl - prev_unrealized  # Update capital mark-to-market
+                prev_unrealized = unrealized_pnl
+            else:
+                prev_unrealized = 0.0
 
             # Track peak equity
             if capital > peak_equity:
@@ -380,8 +388,10 @@ class BacktestEngine:
                 # Adjust capital for commission
                 capital -= commission_amount
 
-                # Adjust shares purchased for commission
-                effective_shares = trade_value / execution_price  # Shares after commission
+                # Full-position sizing: trade_value is already a share count
+                # (capital / execution_price), so use it directly as shares.
+                # Commission is deducted from cash capital above, not from shares.
+                effective_shares = trade_value
 
                 # Record entry
                 in_position = True
@@ -431,8 +441,12 @@ class BacktestEngine:
                 slippage_cost = (market_exit_price - execution_exit_price) * entry_shares
                 total_slippage_cost += slippage_cost
 
+                # Reverse the mark-to-market accumulated for this position,
+                # then apply the realized net P&L exactly once.
+                capital -= prev_unrealized
                 # Update capital
                 capital += net_pnl
+                prev_unrealized = 0.0
 
                 # Record the closed trade
                 trade_return_pct = net_pnl / entry_price * (1 / entry_shares) if entry_shares > 0 else 0
@@ -558,7 +572,7 @@ class BacktestEngine:
             "bar_dates": bar_dates,
 
             # Engine version
-            "engine_version": "1.0.0",
+            "engine_version": "1.1.0",
             "deterministic": True,
         }
 

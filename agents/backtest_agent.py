@@ -210,6 +210,7 @@ def run_backtest_agent(
             "resolved_ticker": engine_result.get("resolved_ticker", ticker),
             "generated_at": engine_result.get("generated_at", datetime.now(timezone.utc).isoformat()),
             "strategy_type": engine_result.get("strategy_type", "moving_average_crossover"),
+            "engine_version": engine_result.get("engine_version"),
             "fast_period": engine_result.get("fast_period", DEFAULT_FAST_PERIOD),
             "slow_period": engine_result.get("slow_period", DEFAULT_SLOW_PERIOD),
             "direction": engine_result.get("direction", DEFAULT_DIRECTION),

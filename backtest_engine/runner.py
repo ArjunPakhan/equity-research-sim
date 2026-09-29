@@ -131,7 +131,7 @@ def run_backtest_from_data(
             "trade_count": 0,
             "winning_trade_count": 0,
             "losing_trade_count": 0,
-            "engine_version": "1.0.0",
+            "engine_version": "1.1.0",
             "deterministic": True,
             "equity_curve": [],
             "drawdown_series": [],
