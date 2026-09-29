@@ -1,5 +1,7 @@
 # Phase 1 Implementation Report
 
+> **Editorial note (repository publication):** This is a historical Phase 1 submission record, preserved as originally written. The `equity-research-sim/` path prefix refers to the project directory as it was named at the time; in this repository all paths are relative to the repository root. `smoke_test.py` and `example_output.py` were Phase 1 validation scripts and are no longer part of the repository. Current test counts and commands are documented in `README.md` and `CONTRIBUTING.md`.
+
 ## A. Files Created/Modified
 
 ### New Files Created

@@ -2,6 +2,14 @@ PHASE 1 IMPLEMENTATION REPORT — BUG FIXES AND VERIFICATION
 AI-Orchestrated Equity Research & Risk Simulation Platform (NSE/BSE)
 ================================================================
 
+EDITORIAL NOTE (repository publication): This is a historical Phase 1
+bug-fix record, preserved as originally written. The equity-research-sim/
+path prefix refers to the project directory as it was named at the time;
+in this repository all paths are relative to the repository root.
+smoke_test.py and example_output.py were Phase 1 validation scripts and
+are no longer part of the repository. Current test counts and commands
+are documented in README.md and CONTRIBUTING.md.
+
 ISSUE DESCRIPTION
 -----------------
 Running `python data/fetch.py RELIANCE` from inside equity-research-sim/ produced:

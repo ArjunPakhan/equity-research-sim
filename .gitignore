@@ -24,6 +24,7 @@ audit.db
 # Env / secrets
 .env
 .env.*
+!.env.example
 *.key
 *.token
 secrets.toml

@@ -147,8 +147,11 @@ python -m venv .venv
 
 pip install -r requirements.txt
 
-# tests (76 = 61 Phase1-2 + 15 API)
+# backend tests (136 passed)
 python -m pytest tests/ -v
+
+# frontend tests (17 passed) — run from the repository root
+node --test frontend/src/components/pipelineState.test.js frontend/src/api.test.js
 
 # backend
 uvicorn api.main:app --reload --port 8000
@@ -159,6 +162,10 @@ cd frontend
 npm install
 npm run dev
 # → http://localhost:5173
+
+# production frontend build (from frontend/)
+npm run build
+# → frontend/dist/ (git-ignored)
 ```
 
 ## NVIDIA NIM LLM Configuration (optional)
@@ -225,8 +232,8 @@ See `DISCLAIMER.md`. Educational/research only, not investment advice, not SEBI-
 ## Repository Structure
 
 ```
-README.md / DISCLAIMER.md / requirements.txt
-api/  agents/  audit/  backtest_engine/  data/  orchestrator/  paper_execution/  tests/  frontend/  docs/
+README.md / DISCLAIMER.md / LICENSE / CONTRIBUTING.md / .env.example / requirements.txt
+api/  agents/  audit/  backtest_engine/  data/  db/  orchestrator/  paper_execution/  scripts/  tests/  frontend/  docs/
 ```
 
 ## Screenshot Checklist (capture manually)
