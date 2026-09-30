@@ -1,46 +1,113 @@
 {
-  "ticker": "RELIANCE.NS",
-  "run_id": "EXAMPLE-be31cdee",
-  "note": "sanitized example \u2014 actual run_id redacted, values from real engine",
+  "note": "Sample API/pipeline result captured from a documentation run. Educational simulation output only — it is not investment advice, not a performance claim, and does not predict future returns. Paper trading only; no broker API, no real orders, no real money.",
+  "run_id": "6443fc05-d1ad-4186-b687-3eab14658435",
+  "ticker": "RELIANCE",
+  "exchange": "NSE",
+  "engine_version": "1.1.0",
+  "created_at": "2026-09-29T21:21:00.520419+00:00",
   "backtest": {
     "strategy_type": "moving_average_crossover",
     "fast_period": 20,
     "slow_period": 50,
+    "direction": "long_only",
     "initial_capital": 100000.0,
-    "final_equity": 99635.22,
-    "total_return_pct": -0.36,
-    "trade_count": 2,
+    "final_equity": 87195.28,
+    "total_return_pct": -12.8,
+    "trade_count": 3,
+    "winning_trade_count": 0,
+    "losing_trade_count": 3,
     "win_rate": 0.0,
     "avg_win": 0.0,
-    "avg_loss": 2.9650000000000003,
+    "avg_loss": 4173.490000000001,
     "profit_factor": 0.0,
-    "max_drawdown": 0.3647839344798558,
+    "max_drawdown": 12.804717366515412,
+    "fees_included": true,
+    "slippage_included": true,
     "commission_assumption": 0.1,
     "slippage_assumption": 0.05,
-    "number_of_bars": 250,
     "is_mock": false,
-    "data_status": "success \u2014 deterministic backtest completed"
+    "data_status": "success — deterministic backtest completed",
+    "generated_at": "2026-09-29T21:21:09.545722+00:00",
+    "number_of_bars": 251,
+    "data_window": {
+      "first_bar": "2025-09-29 00:00:00+05:30",
+      "last_bar": "2026-09-28 00:00:00+05:30",
+      "number_of_bars": 251
+    },
+    "trades": [
+      {
+        "trade_id": 1,
+        "entry_time": 150,
+        "exit_time": 165,
+        "entry_price": 1414.17,
+        "exit_price": 1313.27,
+        "size": 70.7128,
+        "gross_pnl": -7135.17,
+        "fees": 92.86,
+        "slippage": 46.46,
+        "net_pnl": -7228.03,
+        "return_pct": -7.23,
+        "status": "closed"
+      },
+      {
+        "trade_id": 2,
+        "entry_time": 218,
+        "exit_time": 220,
+        "entry_price": 1328.46,
+        "exit_price": 1315.34,
+        "size": 69.7587,
+        "gross_pnl": -915.37,
+        "fees": 91.76,
+        "slippage": 45.9,
+        "net_pnl": -1007.13,
+        "return_pct": -1.09,
+        "status": "closed"
+      },
+      {
+        "trade_id": 3,
+        "entry_time": 225,
+        "exit_time": 239,
+        "entry_price": 1317.26,
+        "exit_price": 1256.87,
+        "size": 69.5172,
+        "gross_pnl": -4197.94,
+        "fees": 87.37,
+        "slippage": 43.71,
+        "net_pnl": -4285.31,
+        "return_pct": -4.68,
+        "status": "closed"
+      }
+    ]
   },
   "risk": {
+    "run_id": "6443fc05-d1ad-4186-b687-3eab14658435",
+    "ticker": "RELIANCE",
+    "resolved_ticker": "RELIANCE",
+    "simulation_disclaimer": "RISK CONTROLS: These are educational simulation controls informed by principles associated with algorithmic trading. They do not constitute regulatory compliance or SEBI approval. All values are simulation parameters.",
     "checks_passed": false,
-    "position_size": 10.0,
-    "exposure_limit": 25.0,
-    "risk_warnings": [
-      "Stop-loss not specified \u2014 required for all simulated trades",
-      "",
-      "Critical: Stop-loss not specified \u2014 trade cannot pass risk checks"
-    ],
     "sebi_aligned_controls": [
       "unique_decision_identifier",
       "daily loss limit check",
       "drawdown ceiling check",
       "order-rate check (single pipeline run)"
-    ]
+    ],
+    "risk_warnings": [
+      "Stop-loss not specified — required for all simulated trades",
+      "Critical: Stop-loss not specified — trade cannot pass risk checks"
+    ],
+    "exposure_limit": 25.0,
+    "daily_loss_limit": null,
+    "position_size": 10.0,
+    "stop_loss": null
   },
-  "approval": "pending",
+  "approval": {
+    "status": "approved",
+    "approved_by": "api_user",
+    "approved_at": "2026-09-29T21:26:18.912125+00:00"
+  },
   "paper_execution": {
-    "trade_id": "f46611bc-d380-40bc-a233-93da0c5444ca",
-    "run_id": "7ca99a90-6398-4519-97bb-3fce95f77f80",
+    "trade_id": "4de323d9-1425-42f9-980a-cfc4653a1888",
+    "run_id": "6443fc05-d1ad-4186-b687-3eab14658435",
     "ticker": "RELIANCE",
     "resolved_ticker": "RELIANCE",
     "execution_status": "initiated",
@@ -52,22 +119,21 @@
     "stop_loss": null,
     "account_capital": 100000,
     "notional": 0.0,
-    "entry_price_source": "unavailable \u2014 Phase 2 mock",
-    "execution_timestamp": "2026-08-24T18:42:20.993342+00:00",
+    "entry_price_source": "unavailable — Phase 2 mock",
+    "execution_timestamp": "2026-09-29T21:26:18.926682+00:00",
     "simulation_disclaimer": "This is a paper-trading simulation only. No real orders were placed. No real money was involved. Results are for educational purposes."
   },
   "review": {
     "ticker": "RELIANCE",
-    "trade_id": "f46611bc-d380-40bc-a233-93da0c5444ca",
+    "trade_id": "4de323d9-1425-42f9-980a-cfc4653a1888",
     "execution_status": "initiated",
-    "review_timestamp": "2026-08-24T18:42:20.996343+00:00",
-    "evidence_assessment": "Insufficient evidence to justify the trade. Risk checks did not all pass. Key concerns: Stop-loss not specified \u2014 required for all simulated trades; ; Critical: Stop-loss not specified \u2014 trade cannot pass risk checks",
+    "review_timestamp": "2026-09-29T21:26:18.929792+00:00",
+    "evidence_assessment": "Insufficient evidence to justify the trade. Risk checks did not all pass. Key concerns: Stop-loss not specified — required for all simulated trades; Critical: Stop-loss not specified — trade cannot pass risk checks",
     "risk_concerns": [
-      "Stop-loss not specified \u2014 required for all simulated trades",
-      "",
-      "Critical: Stop-loss not specified \u2014 trade cannot pass risk checks"
+      "Stop-loss not specified — required for all simulated trades",
+      "Critical: Stop-loss not specified — trade cannot pass risk checks"
     ],
-    "curve_fitting_concerns": "Trade was based on identifiable technical levels \u2014 reviewers should assess whether these levels were objectively derived or curve-fitted to historical data",
+    "curve_fitting_concerns": "Trade was based on identifiable technical levels — reviewers should assess whether these levels were objectively derived or curve-fitted to historical data",
     "should_have_traded": "no",
     "improvements": [
       "Ensure all risk checks pass before trade execution",
@@ -77,15 +143,60 @@
       "Risk controls are simulation-only, not regulatory compliance"
     ]
   },
-  "audit_stages": [
-    "pipeline_initialization",
-    "research",
-    "debate",
-    "backtest",
-    "risk",
-    "human_approval",
-    "human_approval",
-    "paper_execution",
-    "review"
+  "audit_trail": [
+    {
+      "stage": "pipeline_initialization",
+      "timestamp": "2026-09-29T21:21:00.520419+00:00",
+      "human_approval_status": "pending",
+      "approved_by": "system"
+    },
+    {
+      "stage": "research",
+      "timestamp": "2026-09-29T21:21:09.532130+00:00",
+      "human_approval_status": null,
+      "approved_by": null
+    },
+    {
+      "stage": "debate",
+      "timestamp": "2026-09-29T21:21:09.537722+00:00",
+      "human_approval_status": null,
+      "approved_by": null
+    },
+    {
+      "stage": "backtest",
+      "timestamp": "2026-09-29T21:21:09.545722+00:00",
+      "human_approval_status": null,
+      "approved_by": null
+    },
+    {
+      "stage": "risk",
+      "timestamp": "2026-09-29T21:21:09.547721+00:00",
+      "human_approval_status": null,
+      "approved_by": null
+    },
+    {
+      "stage": "human_approval",
+      "timestamp": "2026-09-29T21:21:09.549723+00:00",
+      "human_approval_status": "pending",
+      "approved_by": null
+    },
+    {
+      "stage": "human_approval",
+      "timestamp": "2026-09-29T21:26:18.912125+00:00",
+      "human_approval_status": "approved",
+      "approved_by": "api_user"
+    },
+    {
+      "stage": "paper_execution",
+      "timestamp": "2026-09-29T21:26:18.927786+00:00",
+      "human_approval_status": "n/a",
+      "approved_by": null
+    },
+    {
+      "stage": "review",
+      "timestamp": "2026-09-29T21:26:18.930791+00:00",
+      "human_approval_status": "n/a",
+      "approved_by": null
+    }
   ]
 }

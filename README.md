@@ -1,245 +1,247 @@
-# AI-Orchestrated Equity Research & Risk Simulation Platform
+# AI-Orchestrated Equity Research & Market Risk Simulation
 
-A 5-agent AI pipeline for Indian equity research and paper-trading simulation — combining real NSE market data, LLM reasoning, deterministic quantitative backtesting, risk controls, human-in-the-loop approval, and a full audit trail. **Educational/research simulation only — no live broker execution.**
+**NSE / BSE · NVIDIA NIM · Paper trading only**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/ArjunPakhan/equity-research-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/ArjunPakhan/equity-research-sim/actions/workflows/ci.yml)
+
+A five-stage agent pipeline for Indian equity research and paper-trading simulation. It combines real NSE market data, LLM reasoning, a deterministic quantitative backtesting engine, simulation risk controls, a human approval gate, and a full audit trail — end to end, without ever touching a broker.
+
+> **Paper trading only. No broker API. No real orders. No real money. No investment advice.**
+
+---
 
 ## Overview
 
-This project simulates the full research → trade workflow used in quantitative equity research, but as a safe, auditable, paper-only system:
+The pipeline walks the same shape as a real research-to-trade workflow, but stays safe, deterministic where it matters, and auditable:
 
-- **Real market data** from Yahoo Finance (NSE .NS tickers) with local parquet cache
-- **LLM-based research & reasoning** for synthesis, debate, and review
-- **Deterministic quantitative engine** for all financial calculations
-- **Risk controls** (SEBI-informed, simulation only)
-- **Human approval gate** before any paper execution
-- **SQLite audit trail** linking every stage by `run_id`
-- **FastAPI + React/Vite dashboard** that visualizes backend results without recalculating metrics
+1. **Research** — an LLM synthesizes market data into a trend thesis and flags data-quality issues.
+2. **Debate** — an LLM argues bull and bear cases and records potential biases.
+3. **Backtest** — a deterministic Python engine simulates the strategy and computes every financial metric.
+4. **Risk** — simulation controls surface position-sizing and stop-loss warnings.
+5. **Human approval** — the pipeline halts and waits for an explicit human decision.
+6. **Paper execution** — a local, simulated fill (no broker, no real order).
+7. **Review** — a skeptical agent assesses whether the trade should have happened at all.
 
-> **Paper-trading only. No broker API. No real-money execution. No investment advice.**
+A **FastAPI + React/Vite dashboard** visualizes backend results without recomputing anything, and a **SQLite audit log** records every stage under one `run_id`.
 
-## Key Architecture
-
-```
-              REAL MARKET DATA (yfinance · NSE .NS · parquet cache)
-                              ↓
-                     RESEARCH AGENT (LLM synthesis)
-                              ↓
-                      DEBATE AGENT (bull/bear + biases)
-                              ↓
-                 DETERMINISTIC BACKTEST ENGINE
-                 Moving Average Crossover 20/50 SMA
-                 commission 0.1% · slippage 0.05%
-                              ↓
-                       RISK AGENT (simulation controls)
-                              ↓
-                    ┌─ HUMAN APPROVAL GATE ─┐
-                    │  APPROVE → paper exec  │
-                    │  REJECT  → stop        │
-                    └────────────────────────┘
-                              ↓
-                    PAPER EXECUTION (PAPER_ONLY)
-                              ↓
-                       REVIEW AGENT (skeptical)
-```
-
-Cross-cutting: **SQLite audit trail** (`audit.db`) · **FastAPI** (`api/main.py`) · **React/Vite** (`frontend/`)
-
-Architecture diagram: `docs/architecture.svg` (dark terminal, amber accents; AI vs deterministic clearly separated)
-
-## AI vs Deterministic Computation
-
-**AI proposes and interprets. Code calculates.**
-
-| Layer | Used for |
-|-------|----------|
-| **LLM (AI)** | research synthesis, adversarial debate, bias detection, interpretation of backtest/risk, skeptical review |
-| **Deterministic Python** | strategy execution, trade simulation, fees/slippage, P&L, win rate, avg win/loss, profit factor, max drawdown, equity curve |
-
-The LLM never calculates quantitative metrics. The engine in `backtest_engine/` is the sole source of truth — same inputs → same outputs, no randomness, signal at bar close → execution at next bar open (no look-ahead).
-
-## Agents
-
-| Agent / Component | Responsibility | Output |
-|-----------------|----------------|--------|
-| **Research Agent** | Consume OHLC/fundamentals/news, produce trend, key levels, data quality | `trend`, `key_levels`, `data_sources_used`, `data_warnings` |
-| **Debate Agent** | Bull/bear cases, failure/no-trade conditions, bias checklist | `bull_case`, `bear_case`, `biases_flagged` |
-| **Backtest Agent** | Invoke deterministic engine, present real metrics (no fabrication) | `trades`, `win_rate`, `profit_factor`, `max_drawdown`, `is_mock` |
-| **Risk Agent** | Position size, stop-loss, exposure/daily-loss limits, SEBI-informed simulation controls | `checks_passed`, `risk_warnings`, `sebi_aligned_controls` |
-| **Paper Execution Engine** | Local simulation only (`PAPER_ONLY`), simulated qty/notional | `trade_id`, `execution_status`, `simulation_disclaimer` |
-| **Review Agent** | Skeptical evaluation of full pipeline outcome | `should_have_traded`, `lessons` |
-
-## Data Sources
-
-- **Yahoo Finance via `yfinance`** — OHLC (Open/High/Low/Close/Volume), fundamentals, news
-- **NSE resolution** — tickers normalized to `.NS` (e.g., `RELIANCE` → `RELIANCE.NS`); `BSE` via `.BO`
-- **Local cache** — `data/cache/*.parquet`, TTL 24h OHLC / 1w fundamentals / 6h news, excluded from git
-- **Current window** — validated 251 bars (1y daily) per ticker in smoke test; stored `data_start`/`data_end` per run
-
-## Quantitative Engine
-
-- **Strategy:** Moving Average Crossover — **only** strategy in this project
-- **Fast SMA:** 20 · **Slow SMA:** 50 · **Direction:** long-only
-- **Signal:** generated at **bar close** (using data up to t)
-- **Execution:** **next bar open** (t+1) — prevents look-ahead bias
-- **Initial capital:** ₹100,000 (demo config, configurable via API)
-- **Commission:** 0.1% round-turn (simulation assumption)
-- **Slippage:** 0.05% (simulation assumption)
-- **Metrics (deterministic code):** `trades`, `win_rate`, `avg_win`, `avg_loss`, `profit_factor`, `max_drawdown`, `final_equity`, `total_return_pct`, `trade_count`, `winning/losing_trade_count`, `number_of_bars`
-
-## Example Run — RELIANCE.NS
-
-*Actual verified pipeline output — demonstration, not investment performance:*
-
-| Field | Value |
-|-------|-------|
-| initial_capital | ₹100,000 |
-| final_equity | ₹99,735.38 |
-| total_return_pct | -0.26% |
-| trade_count | 2 |
-| win_rate | 0.0 |
-| avg_win | 0.0 |
-| avg_loss | 2.965 |
-| profit_factor | 0.0 |
-| max_drawdown | 0.2646 |
-| number_of_bars | 251 |
-| is_mock | false |
-| data_status | success — deterministic backtest completed |
-
-Not profitable — expected for a naïve demo strategy on a short window. Historical simulation does not predict future returns.
-
-## Five-Ticker Validation
-
-Each ticker fetched 251 OHLC records (1y daily) and completed `Research → Debate → Backtest → Risk` in smoke test:
-
-- RELIANCE, TCS, INFY, HDFCBANK, ICICIBANK
-
-Only RELIANCE metrics are documented above; other tickers validated for data availability and engine determinism (no invented returns).
-
-## Human-in-the-Loop Approval
+## Architecture
 
 ```
-Research → Debate → Backtest → Risk → WAITING FOR HUMAN APPROVAL
-                                         ├─ APPROVE → Paper Execution → Review (audit: approved)
-                                         └─ REJECT  → Stop, no execution (audit: rejected)
+                REAL MARKET DATA  (yfinance · NSE .NS · parquet cache)
+                                   ↓
+                          RESEARCH AGENT  (LLM synthesis)
+                                   ↓
+                          DEBATE AGENT  (bull/bear + biases)
+                                   ↓
+                    DETERMINISTIC BACKTEST ENGINE  (Python)
+                    20/50 SMA crossover · next-bar open
+                    0.1% commission / 0.05% slippage per side
+                                   ↓
+                           RISK AGENT  (simulation controls)
+                                   ↓
+                        ┌─ HUMAN APPROVAL GATE ─┐
+                        │  APPROVE → paper exec │
+                        │  REJECT  → stop       │
+                        └───────────────────────┘
+                                   ↓
+                     PAPER EXECUTION  (PAPER_ONLY, local)
+                                   ↓
+                         REVIEW AGENT  (skeptical)
 ```
 
-- CLI: `[y/N]` prompt; API: `POST /runs/{id}/approve` / `POST /runs/{id}/reject` (explicit, no default)
-- No AI approval, no implicit approval, no bypass. `skip_approval` only for tests.
+Full diagram: [docs/assets/architecture.svg](docs/assets/architecture.svg)
+
+## Design philosophy & trust boundaries
+
+**LLMs reason. Code calculates. Controls constrain. Humans authorize.**
+
+| Concern | Owner | Why |
+|---|---|---|
+| Research, debate, review reasoning | LLM (NVIDIA NIM) | Open-ended language work |
+| Every financial number | Deterministic Python engine | Same inputs → same outputs |
+| Position sizing, limits, warnings | Risk agent | Simulation guardrails |
+| The final decision | Human | Explicit approve/reject, no default |
+| The record of what happened | SQLite audit trail | Every stage logged under one `run_id` |
+
+The LLM never computes a metric. The engine in `backtest_engine/` is the single source of truth for P&L, win rate, profit factor, drawdown, fees and slippage. The frontend renders backend JSON only — no JavaScript recomputes financial values.
+
+## Application screenshots
+
+> These are captures of a real documentation run (RELIANCE, engine 1.1.0). LLM stages ran in **mock mode** (no `NVIDIA_API_KEY`), which the UI surfaces explicitly.
+
+![Dashboard showing the completed pipeline, backtest metrics and approval state](docs/assets/dashboard-approved.png)
+
+![Research agent card with LLM mode and data provenance](docs/assets/research-provenance.png)
+
+![Debate agent card with bull/bear cases and bias detection](docs/assets/debate-provenance.png)
+
+![Deterministic backtest engine with price/strategy chart, equity curve and drawdown](docs/assets/backtest-results.png)
+
+![Risk controls surfacing warnings while the pipeline waits at the human approval gate](docs/assets/risk-and-approval.png)
+
+![Audit trail linking every stage under one run_id](docs/assets/audit-trail.png)
+
+## AI Research & Debate
+
+- **Research Agent** consumes OHLCV, fundamentals and news, and produces a trend thesis, key levels and data-quality warnings.
+- **Debate Agent** produces a bull case and a bear case, a bias checklist, and explicit no-trade/failure conditions.
+- Both record their **provenance**: `llm_mode` (`real` or `mock`) and the model used. Without `NVIDIA_API_KEY` they run in honest mock mode and say so — they never fabricate an LLM answer.
+
+## Deterministic Backtesting
+
+- **Strategy:** 20/50 SMA crossover — **default long-only** (the engine also accepts `short_only` as a direction).
+- **Signal** is generated at bar close using data up to and including that bar.
+- **Execution** happens at the next bar's open, preventing look-ahead bias.
+- **Costs:** 0.1% commission per side (0.2% round-trip total; simulation assumption) and 0.05% slippage per side (simulation assumption).
+- **Metrics (all engine-computed):** trades, win rate, avg win/loss, profit factor, max drawdown, final equity, total return, equity curve, drawdown series, and per-trade gross/net P&L, fees and slippage.
+
+## Risk & Human Approval
+
+The Risk Agent is a set of **simulation controls** (position sizing, exposure limit, daily-loss and drawdown ceilings, order-rate checks). It surfaces warnings rather than silently blocking:
+
+- Risk controls **warn**; they do not claim regulatory compliance. The pipeline is **not SEBI compliant**.
+- After Risk, the pipeline stops at the **human approval gate** and waits for an explicit `approve` or `reject`.
+- A human can approve even when risk checks did not pass — the system records that risk warnings were shown and that a human authorized the next stage. This is by design, and it is **not** a claim that the risk checks passed.
 
 ## Auditability
 
-Single `run_id` (UUID) links all stages in `audit.db` (`audit_log` table: `id, run_id, agent_name, timestamp, input_json, output_json, human_approval_status, approved_by, approved_at`). Every agent call is logged with full input/output JSON and approval metadata — inspectable via `/runs/{id}/audit`.
+One `run_id` links the stages through the audit log. The `audit_log` table records, per stage: `run_id`, agent name, timestamp, full input/output JSON, and approval metadata (`human_approval_status`, `approved_by`, `approved_at`). Every agent call is inspectable via `GET /runs/{id}/audit`.
 
-## Dashboard
+## Technology Stack
 
-- **Backend:** FastAPI `api/main.py` (port 8000) — CORS explicit `localhost:5173`
-- **Frontend:** React + Vite `frontend/` (port 5173) — dark `#0a0f0a` + amber `#ffb000` + JetBrains Mono, high-density terminal aesthetic
-- **Functionality:** health, run history, run detail, backtest/risk/review views, audit timeline, explicit approve/reject buttons, `PAPER TRADING ONLY` banners
-- **Principle:** frontend only displays backend JSON; `val()` renders `UNAVAILABLE` for null, no JS financial calculations
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.10+, FastAPI, Uvicorn |
+| Data | yfinance, pandas, NumPy, pyarrow (parquet cache) |
+| LLM (optional) | NVIDIA NIM (OpenAI-compatible endpoint) |
+| Frontend | React 18, Vite, no financial math in JS |
+| Storage | SQLite (audit trail) |
+| Testing | pytest (backend), Node's built-in test runner (frontend) |
 
-## Quickstart (Windows PowerShell)
+## Testing & CI
+
+- **Backend:** `python -m pytest tests/` — **146 tests pass**.
+- **Frontend:** `node --test src/components/pipelineState.test.js src/api.test.js` — **17 tests pass**.
+- **Build:** `npm run build` (Vite production build).
+- **CI:** GitHub Actions runs both jobs on every push and pull request (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)). The run for the current head is green.
+
+## Project Structure
+
+```
+api/                 FastAPI application (runs, approval, audit endpoints)
+agents/              Research, Debate, Backtest, Risk, Review agents + NVIDIA NIM config
+backtest_engine/     Deterministic strategy + engine (the source of truth for metrics)
+orchestrator/        CLI pipeline orchestration
+paper_execution/     Local paper-only execution stub
+audit/               Audit-log helpers
+db/                  SQLite schema
+data/                Market-data fetching + parquet cache
+frontend/            React/Vite dashboard
+tests/               Backend test suite
+docs/                Architecture diagram + sample run + screenshots
+```
+
+## Quick Start
+
+**Python 3.10+** (CI pins 3.11) and **Node.js 20+** are required.
+
+### 1. Backend
+
+```bash
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn api.main:app --reload --port 8000
+```
 
 ```powershell
-cd equity-research-sim
-
-# venv (optional)
+# Windows (PowerShell)
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-
 pip install -r requirements.txt
-
-# backend tests (136 passed)
-python -m pytest tests/ -v
-
-# frontend tests (17 passed) — run from the repository root
-node --test frontend/src/components/pipelineState.test.js frontend/src/api.test.js
-
-# backend
 uvicorn api.main:app --reload --port 8000
-# → http://localhost:8000/health, /docs
+```
 
-# frontend (new terminal)
+Health check: http://localhost:8000/health — API docs: http://localhost:8000/docs
+
+### 2. Frontend (separate terminal)
+
+```bash
 cd frontend
 npm install
 npm run dev
-# → http://localhost:5173
+```
+
+The dev server proxies `/health` and `/runs` to the backend. Open http://localhost:5173 (the port in `vite.config.js`).
+
+### 3. Run the tests
+
+```bash
+# backend (from the repository root)
+python -m pytest tests/ -q
+
+# frontend (from the repository root)
+node --test frontend/src/components/pipelineState.test.js frontend/src/api.test.js
 
 # production frontend build (from frontend/)
 npm run build
-# → frontend/dist/ (git-ignored)
 ```
 
-## NVIDIA NIM LLM Configuration (optional)
+## Configuration
 
-Research → Debate reasoning runs on **NVIDIA NIM** (OpenAI-compatible endpoint). Without configuration, agents use their honest mock output; financial metrics are always computed by the deterministic engine, never the LLM.
+All configuration is via process environment variables.
 
-```powershell
-# process environment only — set before starting the backend
-$env:NVIDIA_API_KEY = "your-nvidia-api-key-here"        # your key from build.nvidia.com
-$env:NVIDIA_MODEL   = "nvidia/nemotron-3.5-lightning-30b-a3b"   # optional (default)
-$env:NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"    # optional (default)
-```
+| Variable | Purpose | Required |
+|---|---|---|
+| `NVIDIA_API_KEY` | Enable real LLM calls (NVIDIA NIM) | No — without it, agents run in mock mode |
+| `NVIDIA_MODEL` | Model override | No — defaults to `nvidia/nemotron-3.5-lightning-30b-a3b` |
+| `NVIDIA_BASE_URL` | Endpoint override | No — defaults to `https://integrate.api.nvidia.com/v1` |
+| `AUDIT_DB_PATH` | Override the SQLite audit DB location | No — defaults to `audit.db` in the repo root |
 
-- The key is supplied through the **process environment** (PowerShell `$env:`, system env vars, or your shell profile).
-- **Never commit the key.** `.gitignore` excludes `.env`, `*.key`, `secrets.toml`; no `.env` file is required or created.
-- **No API key is stored in SQLite** (audit records contain only agent inputs/outputs).
-- **No API key is returned by FastAPI** or sent to React.
-- **No broker credentials are involved** — paper trading only.
-- Under pytest, LLM calls are always disabled so tests stay deterministic.
+Notes:
 
-Without `NVIDIA_API_KEY`: Research returns its explicit "LLM not configured" mock and Debate returns explicit "Insufficient evidence" text — never fabricated AI output.
-
-## Demo Workflow
-
-1. Start backend & frontend as above
-2. `POST /runs` → `{ticker:"RELIANCE"}` → returns `run_id` with `awaiting_approval`
-3. `GET /runs/{id}` / `GET /runs/{id}/backtest` / `GET /runs/{id}/risk` — inspect real metrics
-4. Approve: `POST /runs/{id}/approve` → runs paper execution + review
-   or Reject: `POST /runs/{id}/reject` → blocks execution
-5. `GET /runs/{id}/audit` — full trail; dashboard Audit Timeline shows each stage with input/output JSON
-
-## API Documentation
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | `{status:"ok", paper_trading_only:true}` |
-| GET | `/runs` | Recent runs (run_id, ticker, pipeline/approval/execution status, return, trades) |
-| GET | `/runs/{id}` | Overview (stages, backtest/risk/paper/review summaries) |
-| GET | `/runs/{id}/audit` | Full audit trail (all fields preserved) |
-| GET | `/runs/{id}/backtest` | Deterministic backtest output |
-| GET | `/runs/{id}/risk` | Risk Agent output |
-| GET | `/runs/{id}/review` | Review Agent output |
-| POST | `/runs` | Create run (ticker, exchange, capital/commission/slippage/periods); validates, runs to Risk, returns pending |
-| POST | `/runs/{id}/approve` | Verify pending → record approved → paper_execution+review |
-| POST | `/runs/{id}/reject` | Verify pending → record rejected → block execution |
-
-Validation: ticker regex `^[A-Za-z0-9._-]{1,20}$`, capital>0, commission/slippage 0–5, fast<slow; unknown run_id → 404, double approve/reject → 409.
+- The NVIDIA key is read from the environment only and is **never logged, stored in SQLite, returned by the API, or sent to the frontend**. Keep it out of git (`.gitignore` already excludes `.env`, `*.key`, and `secrets.toml`).
+- `AUDIT_DB_PATH` lets you point a run at a throwaway database — useful for demos and screenshots without polluting your development history.
+- See `.env.example` for the full set of variable names.
 
 ## Limitations
 
-- One strategy only: 20/50 SMA long-only (demo, not optimal)
-- Limited historical window in demo (251 bars / 1y daily)
-- Simulated costs (0.1% commission, 0.05% slippage) — not broker-specific
-- Paper execution only — no broker, no live market, no real money
-- No claim of investment performance; past simulation ≠ future returns
-- Survivorship bias not corrected; data quality depends on yfinance (delayed, may be incomplete)
-- LLM reasoning is non-deterministic and may hallucinate — quantitative metrics are deterministic and audited
-- Risk controls are educational simulation, not SEBI compliance
+- One strategy only: 20/50 SMA crossover, default long-only (demo, not optimal).
+- Limited demo window (251 daily bars / ~1 year).
+- Simulated costs (0.1% commission and 0.05% slippage per side) are assumptions, not broker-specific.
+- **Paper execution is a stub.** The current engine records an `initiated` `PAPER_ONLY` execution but does not yet compute a realistic fill — the documentation run produced `simulated_quantity: 0`, `entry_price: 0.0`, `notional: 0.0`, and `entry_price_source: "unavailable — Phase 2 mock"`. It is not a real or meaningful simulated fill.
+- Survivorship bias is not corrected; data quality depends on yfinance (delayed, possibly incomplete).
+- LLM reasoning is non-deterministic and may hallucinate; quantitative metrics are deterministic and audited, so the numbers stay trustworthy even when the language is not.
+- Risk controls are educational simulation, **not SEBI compliance**.
+- Historical simulation does not predict future returns. No result here is investment advice.
 
-## Disclaimer
+## Sample Run
 
-See `DISCLAIMER.md`. Educational/research only, not investment advice, not SEBI-registered.
+A complete, machine-readable sample is in [docs/sample_run.json](docs/sample_run.json) — a documentation run of `RELIANCE` on engine **1.1.0**. Summary:
 
-## Repository Structure
+| Field | Value |
+|---|---|
+| engine_version | 1.1.0 |
+| strategy | moving_average_crossover 20/50 (long_only) |
+| initial_capital | ₹100,000 |
+| final_equity | ₹87,195.28 |
+| total_return_pct | -12.80% |
+| trade_count | 3 (0 wins, 3 losses) |
+| win_rate | 0.0% |
+| profit_factor | 0.0 |
+| max_drawdown | 12.80% |
+| commission | 0.1% per side |
+| slippage | 0.05% per side |
+| data window | 251 bars, 2025-09-29 → 2026-09-28 |
 
-```
-README.md / DISCLAIMER.md / LICENSE / CONTRIBUTING.md / .env.example / requirements.txt
-api/  agents/  audit/  backtest_engine/  data/  db/  orchestrator/  paper_execution/  scripts/  tests/  frontend/  docs/
-```
+This run is deliberately shown **as-is**, not as a performance claim. Three things it illustrates honestly:
 
-## Screenshot Checklist (capture manually)
+1. **Risk warnings were surfaced and ignored by the human.** The risk checks failed (`checks_passed: false` — "Stop-loss not specified"), and the human still approved. The pipeline records that.
+2. **Paper execution is a stub.** The "fill" is `initiated` with zero quantity and no price.
+3. **The Review Agent said no.** `should_have_traded: "no"`, citing the failed risk checks.
 
-1. Dashboard — RELIANCE run (₹100k → ₹99,735 / -0.26% / 2 trades)
-2. Backtest + Risk panels (with UNAVAILABLE handling and SIMULATION CONTROL label)
-3. Approval — WAITING / APPROVED / REJECTED states
-4. Audit timeline — expand one stage showing input/output JSON
-5. Architecture diagram (`docs/architecture.svg`)
+## License
+
+[MIT](LICENSE)
